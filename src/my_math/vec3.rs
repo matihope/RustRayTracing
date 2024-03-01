@@ -15,14 +15,10 @@ impl Vec3 {
         self.length_squared().sqrt()
     }
     pub fn length_squared(self) -> f64 {
-        self.x * self.x + self.y * self.y
+        self.x * self.x + self.y * self.y + self.z * self.z
     }
-    pub fn dot(self, rhs: Vec3) -> Vec3 {
-        Vec3 {
-            x: self.x * rhs.x,
-            y: self.y * rhs.y,
-            z: self.z * rhs.z,
-        }
+    pub fn dot(self, rhs: Vec3) -> f64 {
+        self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
     }
     pub fn cross(self, rhs: Vec3) -> Vec3 {
         Vec3 {
@@ -32,7 +28,7 @@ impl Vec3 {
         }
     }
     pub fn normalized(self) -> Vec3 {
-        self * (1. / self.length())
+        self / self.length()
     }
 }
 
@@ -43,6 +39,17 @@ impl ops::Add<Vec3> for Vec3 {
             x: self.x + rhs.x,
             y: self.y + rhs.y,
             z: self.z + rhs.z,
+        }
+    }
+}
+
+impl ops::Sub<Vec3> for Vec3 {
+    type Output = Vec3;
+    fn sub(self, rhs: Vec3) -> Self {
+        Vec3 {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+            z: self.z - rhs.z,
         }
     }
 }
@@ -58,13 +65,30 @@ impl ops::Neg for Vec3 {
     }
 }
 
-impl<T: Copy> ops::Mul<T> for Vec3 where f64: ops::Mul<T, Output = f64> {
+impl<T: Copy> ops::Mul<T> for Vec3
+where
+    f64: ops::Mul<T, Output = f64>,
+{
     type Output = Vec3;
     fn mul(self, rhs: T) -> Vec3 {
         Vec3 {
             x: self.x * rhs.clone(),
             y: self.y * rhs.clone(),
             z: self.z * rhs,
+        }
+    }
+}
+
+impl<T: Copy> ops::Div<T> for Vec3
+where
+    f64: ops::Div<T, Output = f64>,
+{
+    type Output = Vec3;
+    fn div(self, rhs: T) -> Vec3 {
+        Vec3 {
+            x: self.x / rhs.clone(),
+            y: self.y / rhs.clone(),
+            z: self.z / rhs,
         }
     }
 }
