@@ -1,5 +1,5 @@
-pub use self::{vec3::Vec3, ray::Ray};
-mod vec3;
-mod ray;
-
-pub type Point3 = Vec3;
+pub mod prelude;
+pub mod vec3;
+pub mod ray;
+pub mod constants;
+pub mod funcs;

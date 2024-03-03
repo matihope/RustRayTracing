@@ -1,4 +1,4 @@
-use crate::my_math::Vec3;
+use crate::my_math::vec3::Vec3;
 
 const FUN_MAX: f64 = 255.999;
 pub type Color = Vec3;

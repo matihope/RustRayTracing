@@ -1,15 +1,19 @@
-use crate::my_math::{Point3, Ray};
-
 use super::hittable::{HitRecord, Hittable};
+use crate::my_math::prelude::{Point3, Ray};
 
 pub struct Sphere {
     center: Point3,
-    radius: f64
+    radius: f64,
+}
+
+impl Sphere {
+    pub fn new(center: Point3, radius: f64) -> Self {
+        Sphere { center, radius }
+    }
 }
 
 impl Hittable for Sphere {
-    fn hit(&self, ray: Ray, ray_tmin: f64, ray_tmax: f64, rec: &mut HitRecord) -> bool {
-
+    fn hit(&self, ray: &Ray, ray_tmin: f64, ray_tmax: f64, rec: &mut HitRecord) -> bool {
         // A Point3 is on a sphere if:
         // (P - C) ^ 2 == radius^2
         // In other words, we want to know if it ever hits the sphere:
@@ -22,9 +26,9 @@ impl Hittable for Sphere {
 
         let oc = ray.origin - self.center;
 
-        let a = ray.direction.dot(ray.direction);
-        let half_b = ray.direction.dot(oc);
-        let c = oc.dot(oc) - self.radius * self.radius;
+        let a = ray.direction.dot(&ray.direction);
+        let half_b = ray.direction.dot(&oc);
+        let c = oc.dot(&oc) - self.radius * self.radius;
 
         let delta: f64 = half_b * half_b - a * c;
         let mut root = (-half_b - delta.sqrt()) / a;
@@ -37,7 +41,8 @@ impl Hittable for Sphere {
 
         rec.t = root;
         rec.p = ray.at(root);
-        rec.normal = (rec.p - self.center) / self.radius;
+        let outward_normal = (rec.p - self.center) / self.radius;
+        rec.set_face_normal(ray, &outward_normal);
 
         true
     }

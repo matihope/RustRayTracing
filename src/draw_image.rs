@@ -1,14 +1,13 @@
-use crate::{color::Color, globals::*, my_math::*, hittable::*};
+use crate::{color::Color, globals::*, hittables::{prelude::*, sphere::Sphere}, my_math::prelude::*};
 use indicatif::ProgressBar;
 
-fn hit_sphere(center: Point3, radius: f64, ray: &Ray) -> f64 {
-}
+use std::rc::Rc;
 
-fn ray_color(ray: Ray) -> Color {
-    let t = hit_sphere(Vec3::new(0., 0., -1.), 0.5, &ray);
-    if t > 0.0 {
-        let normal = (ray.at(t) - Vec3::new(0., 0., -1.)).normalized();
-        Color::new(normal.x + 1., normal.y + 1., normal.z + 1.) * 0.5
+
+fn ray_color(ray: Ray, world: &HittableList) -> Color {
+    let mut hit_record = HitRecord::empty();
+    if world.hit(&ray, 0., INFINITY, &mut hit_record) {
+        (hit_record.normal + Color::new(1., 1., 1.)) * 0.5
     } else {
         let unit_direction = ray.direction.normalized();
         let a = 0.5 * (unit_direction.y + 1.0);
@@ -35,6 +34,11 @@ pub fn draw_image() {
     );
 
     let bar = ProgressBar::new(IMAGE_WIDTH * IMAGE_HEIGHT);
+    // World
+    let mut world = HittableList::empty();
+    world.add(Rc::new(Sphere::new(Point3::new(0., 0., -1.), 0.5)));
+    world.add(Rc::new(Sphere::new(Point3::new(0., -100., -1.), 100.)));
+
     println!("P3\n{} {}\n255", IMAGE_WIDTH, IMAGE_HEIGHT);
     for j in 0..IMAGE_HEIGHT {
         for i in 0..IMAGE_WIDTH {
@@ -43,7 +47,7 @@ pub fn draw_image() {
             let ray_direction = pixel_center - camera_center;
             let r = Ray::new(camera_center, ray_direction);
 
-            let pixel_color = ray_color(r);
+            let pixel_color = ray_color(r, &world);
             pixel_color.write_color();
 
             bar.inc(1);

@@ -1,5 +1,7 @@
-use super::{Point3, Vec3};
+use super::prelude::*;
 
+
+#[derive(Clone, Copy)]
 pub struct Ray {
     pub origin: Point3,
     pub direction: Vec3,

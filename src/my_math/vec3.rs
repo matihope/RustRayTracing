@@ -17,10 +17,10 @@ impl Vec3 {
     pub fn length_squared(self) -> f64 {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
-    pub fn dot(self, rhs: Vec3) -> f64 {
+    pub fn dot(self, rhs: &Vec3) -> f64 {
         self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
     }
-    pub fn cross(self, rhs: Vec3) -> Vec3 {
+    pub fn cross(self, rhs: &Vec3) -> Vec3 {
         Vec3 {
             x: self.y * rhs.z - self.z * rhs.y,
             y: self.z * rhs.x - self.x * rhs.z,
