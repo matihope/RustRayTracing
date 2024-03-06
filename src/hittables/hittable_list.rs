@@ -8,7 +8,7 @@ pub struct HittableList {
 }
 
 impl HittableList {
-    pub fn empty() -> Self {
+    pub fn newEmpty() -> Self {
         HittableList {
             objects: Vec::new(),
         }
@@ -23,6 +23,9 @@ impl HittableList {
     pub fn add(&mut self, hittable: Rc<dyn Hittable>) {
         self.objects.push(hittable);
     }
+    pub fn clear(&mut self) {
+        self.objects.clear();
+    }
 }
 
 impl Hittable for HittableList {
@@ -34,8 +37,8 @@ impl Hittable for HittableList {
         for obj in self.objects.iter() {
             if obj.hit(ray, ray_tmin, closest_so_far, &mut temp_rec) {
                 hit_anything = true;
-                closest_so_far = temp_rec.t.min(closest_so_far);
-                _hit_record.replace
+                closest_so_far = temp_rec.t;
+                _hit_record.clone_from(&temp_rec);
             }
         }
         hit_anything

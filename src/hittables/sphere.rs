@@ -26,21 +26,25 @@ impl Hittable for Sphere {
 
         let oc = ray.origin - self.center;
 
-        let a = ray.direction.dot(&ray.direction);
+        let a = ray.direction.length_squared();
         let half_b = ray.direction.dot(&oc);
-        let c = oc.dot(&oc) - self.radius * self.radius;
+        let c = oc.length_squared() - self.radius * self.radius;
 
         let delta: f64 = half_b * half_b - a * c;
-        let mut root = (-half_b - delta.sqrt()) / a;
+        if delta < 0. {
+            return false;
+        }
+        let sqrt_delta = delta.sqrt();
+        let mut root = (-half_b - sqrt_delta) / a;
         if root <= ray_tmin || ray_tmax <= root {
-            root = (-half_b + delta.sqrt()) / a;
+            root = (-half_b + sqrt_delta) / a;
             if root <= ray_tmin || ray_tmax <= root {
                 return false;
             }
         }
 
         rec.t = root;
-        rec.p = ray.at(root);
+        rec.p = ray.at(rec.t);
         let outward_normal = (rec.p - self.center) / self.radius;
         rec.set_face_normal(ray, &outward_normal);
 

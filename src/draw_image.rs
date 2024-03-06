@@ -35,9 +35,9 @@ pub fn draw_image() {
 
     let bar = ProgressBar::new(IMAGE_WIDTH * IMAGE_HEIGHT);
     // World
-    let mut world = HittableList::empty();
+    let mut world = HittableList::newEmpty();
     world.add(Rc::new(Sphere::new(Point3::new(0., 0., -1.), 0.5)));
-    world.add(Rc::new(Sphere::new(Point3::new(0., -100., -1.), 100.)));
+    world.add(Rc::new(Sphere::new(Point3::new(0., -100.5, -1.), 100.)));
 
     println!("P3\n{} {}\n255", IMAGE_WIDTH, IMAGE_HEIGHT);
     for j in 0..IMAGE_HEIGHT {
