@@ -1,4 +1,4 @@
-use crate::my_math::prelude::{Point3, Ray, Vec3};
+use crate::my_math::prelude::*;
 
 #[derive(Copy, Clone)]
 pub struct HitRecord {
@@ -33,8 +33,7 @@ pub trait Hittable {
     fn hit<'a>(
         &self,
         ray: &Ray,
-        ray_tmin: f64,
-        ray_tmax: f64,
+        ray_t: &Interval,
         hit_record: &'a mut HitRecord,
     ) -> bool;
 }

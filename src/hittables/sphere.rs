@@ -1,5 +1,5 @@
 use super::hittable::{HitRecord, Hittable};
-use crate::my_math::prelude::{Point3, Ray};
+use crate::my_math::prelude::*;
 
 pub struct Sphere {
     center: Point3,
@@ -13,7 +13,7 @@ impl Sphere {
 }
 
 impl Hittable for Sphere {
-    fn hit(&self, ray: &Ray, ray_tmin: f64, ray_tmax: f64, rec: &mut HitRecord) -> bool {
+    fn hit(&self, ray: &Ray, ray_t: &Interval, rec: &mut HitRecord) -> bool {
         // A Point3 is on a sphere if:
         // (P - C) ^ 2 == radius^2
         // In other words, we want to know if it ever hits the sphere:
@@ -36,9 +36,9 @@ impl Hittable for Sphere {
         }
         let sqrt_delta = delta.sqrt();
         let mut root = (-half_b - sqrt_delta) / a;
-        if root <= ray_tmin || ray_tmax <= root {
+        if !ray_t.surrounds(root) {
             root = (-half_b + sqrt_delta) / a;
-            if root <= ray_tmin || ray_tmax <= root {
+            if !ray_t.surrounds(root) {
                 return false;
             }
         }

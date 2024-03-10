@@ -1,8 +1,8 @@
 mod color;
 mod draw_image;
-mod globals;
 mod hittables;
 mod my_math;
+mod camera;
 
 use draw_image::draw_image;
 
