@@ -8,6 +8,13 @@ pub struct HitRecord {
     pub front_face: bool,
 }
 
+pub struct HitRecordNoHit;
+
+pub enum HitResult {
+    Hit(HitRecord),
+    Miss,
+}
+
 impl HitRecord {
     pub fn set_face_normal(&mut self, ray: &Ray, outward_normal: &Vec3) {
         // Sets the hit record normal vector
@@ -30,10 +37,5 @@ impl HitRecord {
 }
 
 pub trait Hittable {
-    fn hit<'a>(
-        &self,
-        ray: &Ray,
-        ray_t: &Interval,
-        hit_record: &'a mut HitRecord,
-    ) -> bool;
+    fn hit<'a>(&self, ray: &Ray, ray_t: &Interval) -> HitResult;
 }

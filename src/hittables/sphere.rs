@@ -1,4 +1,4 @@
-use super::hittable::{HitRecord, Hittable};
+use super::hittable::{HitRecord, HitResult, Hittable};
 use crate::my_math::prelude::*;
 
 pub struct Sphere {
@@ -13,7 +13,7 @@ impl Sphere {
 }
 
 impl Hittable for Sphere {
-    fn hit(&self, ray: &Ray, ray_t: &Interval, rec: &mut HitRecord) -> bool {
+    fn hit(&self, ray: &Ray, ray_t: &Interval) -> HitResult {
         // A Point3 is on a sphere if:
         // (P - C) ^ 2 == radius^2
         // In other words, we want to know if it ever hits the sphere:
@@ -32,22 +32,23 @@ impl Hittable for Sphere {
 
         let delta: f64 = half_b * half_b - a * c;
         if delta < 0. {
-            return false;
+            return HitResult::Miss;
         }
         let sqrt_delta = delta.sqrt();
         let mut root = (-half_b - sqrt_delta) / a;
         if !ray_t.surrounds(root) {
             root = (-half_b + sqrt_delta) / a;
             if !ray_t.surrounds(root) {
-                return false;
+                return HitResult::Miss;
             }
         }
 
+        let mut rec = HitRecord::empty();
         rec.t = root;
         rec.p = ray.at(rec.t);
         let outward_normal = (rec.p - self.center) / self.radius;
         rec.set_face_normal(ray, &outward_normal);
 
-        true
+        HitResult::Hit(rec)
     }
 }

@@ -1,3 +1,9 @@
+use std::{
+    borrow::Borrow,
+    ops::Deref,
+    sync::{Arc, Mutex, RwLock},
+};
+
 use indicatif::ProgressBar;
 
 use crate::{
@@ -6,7 +12,7 @@ use crate::{
     my_math::prelude::*,
 };
 
-use std::thread;
+use rayon::prelude::*;
 
 pub struct Camera {
     pub aspect_ratio: f64,
@@ -41,17 +47,31 @@ impl Camera {
         self.initialize();
         println!("P3\n{} {}\n255", self.image_width, self.image_height);
 
-        (0..self.image_height)
-            .flat_map(|y| (0..self.image_width).into_iter().map(move |x| (x, y)))
-            .for_each(|(x, y)| {
-                let mut pixel_color = Color::new(0., 0., 0.);
-                for _ in 0..self.samples_per_pixel {
-                    pixel_color += self.ray_color(self.get_ray(x, y), world);
-                }
-                pixel_color.write_color(self.samples_per_pixel);
-            });
+        let mut mem = vec![
+            vec![Color::new(0., 0., 0.); self.image_width as usize];
+            self.image_height as usize
+        ];
 
         // let bar = ProgressBar::new(self.image_width * self.image_height);
+        let world = Arc::new(world);
+        let img = (0..self.image_height)
+            .flat_map(|y| (0..self.image_width).map(move |x| (x, y)))
+            .collect::<Vec<(u64, u64)>>()
+            .par_iter()
+            .map(|(x, y)| {
+                let (x, y) = (*x, *y);
+                let mut pixel_color = Color::new(0., 0., 0.);
+                for _ in 0..self.samples_per_pixel {
+                    pixel_color += self.ray_color(self.get_ray(x, y));
+                }
+                mem[y as usize][x as usize] = pixel_color;
+            });
+
+        mem.iter().for_each(|row| {
+            row.iter()
+                .for_each(|col| col.write_color(self.samples_per_pixel))
+        });
+
         // for j in 0..self.image_height {
         //     for i in 0..self.image_width {
         //         let mut pixel_color = Color::new(0., 0., 0.);
@@ -94,14 +114,15 @@ impl Camera {
         );
     }
 
-    fn ray_color(&self, ray: Ray, world: &dyn Hittable) -> Color {
+    fn ray_color(&self, ray: Ray, world: Arc<&dyn Hittable>) -> Color {
         let mut hit_record = HitRecord::empty();
-        if world.hit(&ray, &Interval::new(0., INFINITY), &mut hit_record) {
-            (hit_record.normal + Color::new(1., 1., 1.)) * 0.5
-        } else {
-            let unit_direction = ray.direction.normalized();
-            let a = 0.5 * (unit_direction.y + 1.0);
-            Color::new(1.0, 1.0, 1.0) * (1.0 - a) + Color::new(0.5, 0.7, 1.0) * a
+        match world.hit(&ray, &Interval::new(0., INFINITY)) {
+            HitResult::Hit(hit_record) => (hit_record.normal + Color::new(1., 1., 1.)) * 0.5,
+            HitResult::Miss => {
+                let unit_direction = ray.direction.normalized();
+                let a = 0.5 * (unit_direction.y + 1.0);
+                Color::new(1.0, 1.0, 1.0) * (1.0 - a) + Color::new(0.5, 0.7, 1.0) * a
+            }
         }
     }
 
