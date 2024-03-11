@@ -130,7 +130,6 @@ impl Camera {
     }
 
     fn ray_color(&self, ray: Ray, world: &dyn Hittable) -> Color {
-        let mut hit_record = HitRecord::empty();
         match world.hit(&ray, &Interval::new(0., INFINITY)) {
             HitResult::Hit(hit_record) => (hit_record.normal + Color::new(1., 1., 1.)) * 0.5,
             HitResult::Miss => {
