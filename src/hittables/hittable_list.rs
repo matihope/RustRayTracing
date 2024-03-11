@@ -1,11 +1,14 @@
 use crate::my_math::prelude::*;
 
-use super::hittable::{HitRecord, HitResult, Hittable};
+use super::hittable::{HitResult, Hittable};
 use std::rc::Rc;
 
 pub struct HittableList {
     objects: Vec<Rc<dyn Hittable>>,
 }
+
+unsafe impl Sync for HittableList {}
+unsafe impl Send for HittableList {}
 
 impl HittableList {
     pub fn new_empty() -> Self {
@@ -28,15 +31,13 @@ impl HittableList {
 
 impl Hittable for HittableList {
     fn hit(&self, ray: &Ray, ray_t: &Interval) -> HitResult {
-        let mut temp_rec = HitRecord::empty();
-        let mut hit_anything = false;
         let mut closest_so_far = ray_t.max;
         let mut hit_result = HitResult::Miss;
 
         for obj in self.objects.iter() {
             match obj.hit(ray, &Interval::new(ray_t.min, closest_so_far)) {
                 HitResult::Hit(x) => {
-                    closest_so_far = temp_rec.t;
+                    closest_so_far = x.t;
                     hit_result = HitResult::Hit(x);
                 }
                 HitResult::Miss => (),

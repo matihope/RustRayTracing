@@ -37,5 +37,5 @@ impl HitRecord {
 }
 
 pub trait Hittable {
-    fn hit<'a>(&self, ray: &Ray, ray_t: &Interval) -> HitResult;
+    fn hit(&self, ray: &Ray, ray_t: &Interval) -> HitResult;
 }

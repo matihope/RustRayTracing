@@ -1,4 +1,4 @@
-use rand::{distributions::{Distribution, Uniform}, Rng};
+use rand::{distributions::Uniform, Rng};
 
 use super::constants::PI;
 

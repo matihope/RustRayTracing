@@ -1,18 +1,11 @@
-use std::{
-    borrow::Borrow,
-    ops::Deref,
-    sync::{Arc, Mutex, RwLock},
-};
+use std::sync::{Arc, Mutex};
 
 use indicatif::ProgressBar;
 
-use crate::{
-    color::{self, Color},
-    hittables::prelude::*,
-    my_math::prelude::*,
-};
+use crate::{color::Color, hittables::prelude::*, my_math::prelude::*};
 
 use rayon::prelude::*;
+use std::sync::RwLock;
 
 pub struct Camera {
     pub aspect_ratio: f64,
@@ -43,33 +36,55 @@ impl Default for Camera {
 }
 
 impl Camera {
-    pub fn render(&mut self, world: &dyn Hittable) {
+    pub fn render(&mut self, world: &HittableList) {
         self.initialize();
         println!("P3\n{} {}\n255", self.image_width, self.image_height);
 
-        let mut mem = vec![
-            vec![Color::new(0., 0., 0.); self.image_width as usize];
+        let mem = Arc::new(RwLock::new(vec![
+            vec![
+                Color::new(0., 0., 0.);
+                self.image_width as usize
+            ];
             self.image_height as usize
-        ];
+        ]));
 
-        // let bar = ProgressBar::new(self.image_width * self.image_height);
-        let world = Arc::new(world);
-        let img = (0..self.image_height)
+        let bar = Arc::new(Mutex::new(ProgressBar::new(
+            self.image_width * self.image_height,
+        )));
+
+        let world = Arc::new(RwLock::new(world));
+        (0..self.image_height)
             .flat_map(|y| (0..self.image_width).map(move |x| (x, y)))
             .collect::<Vec<(u64, u64)>>()
             .par_iter()
-            .map(|(x, y)| {
+            .for_each(|(x, y)| {
                 let (x, y) = (*x, *y);
                 let mut pixel_color = Color::new(0., 0., 0.);
+
+                // Access the world
+                let world = Arc::clone(&world);
+                let world = world.read().unwrap();
+
+                // Sample the color
                 for _ in 0..self.samples_per_pixel {
-                    pixel_color += self.ray_color(self.get_ray(x, y));
+                    pixel_color += self.ray_color(self.get_ray(x, y), *world);
                 }
-                mem[y as usize][x as usize] = pixel_color;
+
+                // Save the color to the memory
+                let mem = Arc::clone(&mem);
+                mem.write().unwrap()[y as usize][x as usize] = pixel_color;
+
+                // Progress the bar
+                let bar = Arc::clone(&bar);
+                bar.lock().unwrap().inc(1);
             });
 
+        let mem = mem.read();
         mem.iter().for_each(|row| {
-            row.iter()
-                .for_each(|col| col.write_color(self.samples_per_pixel))
+            row.iter().for_each(|col| {
+                col.iter()
+                    .for_each(|color| color.write_color(self.samples_per_pixel))
+            })
         });
 
         // for j in 0..self.image_height {
@@ -114,7 +129,7 @@ impl Camera {
         );
     }
 
-    fn ray_color(&self, ray: Ray, world: Arc<&dyn Hittable>) -> Color {
+    fn ray_color(&self, ray: Ray, world: &dyn Hittable) -> Color {
         let mut hit_record = HitRecord::empty();
         match world.hit(&ray, &Interval::new(0., INFINITY)) {
             HitResult::Hit(hit_record) => (hit_record.normal + Color::new(1., 1., 1.)) * 0.5,
