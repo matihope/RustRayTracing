@@ -45,8 +45,8 @@ impl Hittable for Sphere {
 
         let mut rec = HitRecord::empty();
         rec.t = root;
-        rec.p = ray.at(rec.t);
-        let outward_normal = (rec.p - self.center) / self.radius;
+        rec.intersection_point = ray.at(rec.t);
+        let outward_normal = (rec.intersection_point - self.center) / self.radius;
         rec.set_face_normal(ray, &outward_normal);
 
         HitResult::Hit(rec)

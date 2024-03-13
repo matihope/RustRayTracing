@@ -2,7 +2,7 @@ use crate::my_math::prelude::*;
 
 #[derive(Copy, Clone)]
 pub struct HitRecord {
-    pub p: Point3,
+    pub intersection_point: Point3,
     pub normal: Vec3,
     pub t: f64,
     pub front_face: bool,
@@ -28,7 +28,7 @@ impl HitRecord {
     }
     pub fn empty() -> Self {
         HitRecord {
-            p: Point3::new(0., 0., 0.),
+            intersection_point: Point3::new(0., 0., 0.),
             normal: Vec3::new(0., 0., 0.),
             t: 0.,
             front_face: false,

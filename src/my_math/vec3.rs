@@ -1,5 +1,7 @@
 use core::ops;
 
+use super::prelude::{random_double, random_double_range};
+
 #[derive(Debug, Copy, Clone)]
 pub struct Vec3 {
     pub x: f64,
@@ -29,6 +31,37 @@ impl Vec3 {
     }
     pub fn normalized(self) -> Vec3 {
         self / self.length()
+    }
+
+    fn random() -> Self {
+        Self::random_range(0., 1.)
+    }
+
+    pub fn random_range(min: f64, max: f64) -> Self {
+        Vec3 {
+            x: random_double_range(min, max),
+            y: random_double_range(min, max),
+            z: random_double_range(min, max),
+        }
+    }
+    fn random_in_unit_sphere() -> Self {
+        loop {
+            let v = Vec3::random_range(-1., 1.);
+            if v.length_squared() <= 1. {
+                break v;
+            }
+        }
+    }
+    pub fn random_unit_vector() -> Self {
+        Vec3::random_in_unit_sphere().normalized()
+    }
+    pub fn random_in_hemisphere(normal: &Vec3) -> Vec3 {
+        let v = Vec3::random_unit_vector();
+        if v.dot(normal) < 0.0 {
+            -v
+        } else {
+            v
+        }
     }
 }
 

@@ -11,6 +11,7 @@ pub struct Camera {
     pub aspect_ratio: f64,
     pub image_width: u64,
     pub samples_per_pixel: u64,
+    pub max_ray_bounces: u64,
     image_height: u64,
     center: Point3,
     pixel00_loc: Point3,
@@ -24,6 +25,7 @@ impl Default for Camera {
             aspect_ratio: 1.0,
             image_width: 100,
             samples_per_pixel: 10,
+            max_ray_bounces: 10,
             image_height: 0,
             center: Point3::new(0., 0., 0.),
             pixel00_loc: Point3::new(0., 0., 0.),
@@ -57,6 +59,7 @@ impl Camera {
             .flat_map(|y| (0..self.image_width).map(move |x| (x, y)))
             .collect::<Vec<(u64, u64)>>()
             .par_iter()
+            // .iter()
             .for_each(|(x, y)| {
                 let (x, y) = (*x, *y);
                 let mut pixel_color = Color::new(0., 0., 0.);
@@ -67,7 +70,7 @@ impl Camera {
 
                 // Sample the color
                 for _ in 0..self.samples_per_pixel {
-                    pixel_color += self.ray_color(self.get_ray(x, y), *world);
+                    pixel_color += self.ray_color(self.get_ray(x, y), *world, self.max_ray_bounces);
                 }
 
                 // Save the color to the memory
@@ -79,25 +82,10 @@ impl Camera {
                 bar.lock().unwrap().inc(1);
             });
 
-        let mem = mem.read();
-        mem.iter().for_each(|row| {
-            row.iter().for_each(|col| {
-                col.iter()
-                    .for_each(|color| color.write_color(self.samples_per_pixel))
-            })
+        mem.read().unwrap().iter().for_each(|row| {
+            row.iter()
+                .for_each(|c| c.write_color(self.samples_per_pixel))
         });
-
-        // for j in 0..self.image_height {
-        //     for i in 0..self.image_width {
-        //         let mut pixel_color = Color::new(0., 0., 0.);
-        //         for _ in 0..self.samples_per_pixel {
-        //             pixel_color += self.ray_color(self.get_ray(i, j), world);
-        //         }
-        //         pixel_color.write_color(self.samples_per_pixel);
-
-        //         bar.inc(1);
-        //     }
-        // }
     }
 
     fn initialize(&mut self) {
@@ -129,9 +117,24 @@ impl Camera {
         );
     }
 
-    fn ray_color(&self, ray: Ray, world: &dyn Hittable) -> Color {
-        match world.hit(&ray, &Interval::new(0., INFINITY)) {
-            HitResult::Hit(hit_record) => (hit_record.normal + Color::new(1., 1., 1.)) * 0.5,
+    fn ray_color(&self, ray: Ray, world: &dyn Hittable, bounces_left: u64) -> Color {
+        let hit = if bounces_left == 0 {
+            HitResult::Miss
+        } else {
+            world.hit(&ray, &Interval::new(0.01, INFINITY))
+        };
+
+        match hit {
+            HitResult::Hit(hit_record) => {
+                let direction = Vec3::random_unit_vector() + hit_record.normal;
+
+                let color = self.ray_color(
+                    Ray::new(hit_record.intersection_point, direction),
+                    world,
+                    bounces_left - 1,
+                );
+                color * 0.5
+            }
             HitResult::Miss => {
                 let unit_direction = ray.direction.normalized();
                 let a = 0.5 * (unit_direction.y + 1.0);

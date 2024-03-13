@@ -7,6 +7,10 @@ pub fn deg2rad(degrees: f64) -> f64 {
 }
 
 pub fn random_double() -> f64 {
-    let rng = Uniform::new(0., 1.);
+    random_double_range(0., 1.)
+}
+
+pub fn random_double_range(min: f64, max: f64) -> f64 {
+    let rng = Uniform::new(min, max);
     rand::thread_rng().sample(rng)
 }
