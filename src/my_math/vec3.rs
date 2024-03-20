@@ -1,6 +1,6 @@
 use core::ops;
 
-use super::prelude::{random_double, random_double_range};
+use super::prelude::random_double_range;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Vec3 {
@@ -10,6 +10,8 @@ pub struct Vec3 {
 }
 
 impl Vec3 {
+    const EPSILON: f64 = 1e-8;
+
     pub fn new(x: f64, y: f64, z: f64) -> Self {
         Vec3 { x: x, y: y, z: z }
     }
@@ -62,6 +64,20 @@ impl Vec3 {
         } else {
             v
         }
+    }
+    pub fn near_zero(&self) -> bool {
+        return self.x.abs() < Self::EPSILON
+            && self.y.abs() < Self::EPSILON
+            && self.z.abs() < Self::EPSILON;
+    }
+    pub fn reflect(&self, normal: &Vec3) -> Vec3 {
+        *self - *normal * self.dot(normal) * 2.
+    }
+    pub fn refract(&self, normal: &Vec3, refraction_fraction: f64) -> Vec3 {
+        let cosine = -self.dot(normal).min(1.0);
+        let r_prime_perpendicular = (*self + *normal * cosine) * refraction_fraction;
+        let r_prime_parallel = -*normal * (1. - r_prime_perpendicular.length_squared()).abs().sqrt();
+        r_prime_parallel + r_prime_perpendicular
     }
 }
 
@@ -120,6 +136,16 @@ where
     }
 }
 
+impl ops::Mul<Vec3> for Vec3 {
+    type Output = Vec3;
+    fn mul(self, rhs: Vec3) -> Vec3 {
+        Vec3 {
+            x: self.x * rhs.x,
+            y: self.y * rhs.y,
+            z: self.z * rhs.z,
+        }
+    }
+}
 impl<T: Copy> ops::Div<T> for Vec3
 where
     f64: ops::Div<T, Output = f64>,

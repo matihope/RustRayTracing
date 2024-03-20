@@ -2,7 +2,9 @@ use std::sync::{Arc, Mutex};
 
 use indicatif::ProgressBar;
 
-use crate::{color::Color, hittables::prelude::*, my_math::prelude::*};
+use crate::{
+    color::Color, hittables::prelude::*, material::material::ScatterResult, my_math::prelude::*,
+};
 
 use rayon::prelude::*;
 use std::sync::RwLock;
@@ -17,6 +19,7 @@ pub struct Camera {
     pixel00_loc: Point3,
     pixel_delta_u: Vec3,
     pixel_delta_v: Vec3,
+    vfov: f64,
 }
 
 impl Default for Camera {
@@ -38,7 +41,8 @@ impl Default for Camera {
 }
 
 impl Camera {
-    pub fn render(&mut self, world: &HittableList) {
+    pub fn render(&mut self, world: &HittableList)
+    {
         self.initialize();
         println!("P3\n{} {}\n255", self.image_width, self.image_height);
 
@@ -117,7 +121,7 @@ impl Camera {
         );
     }
 
-    fn ray_color(&self, ray: Ray, world: &dyn Hittable, bounces_left: u64) -> Color {
+    fn ray_color(&self, ray: Ray, world: &impl Hittable, bounces_left: u64) -> Color {
         let hit = if bounces_left == 0 {
             HitResult::Miss
         } else {
@@ -125,16 +129,14 @@ impl Camera {
         };
 
         match hit {
-            HitResult::Hit(hit_record) => {
-                let direction = Vec3::random_unit_vector() + hit_record.normal;
-
-                let color = self.ray_color(
-                    Ray::new(hit_record.intersection_point, direction),
-                    world,
-                    bounces_left - 1,
-                );
-                color * 0.5
-            }
+            HitResult::Hit(hit_record) => match hit_record.material.scatter(&ray, &hit_record) {
+                ScatterResult::Scatter { ray, attenuation } => {
+                    let color: Color = attenuation;
+                    let ray: Vec3 = self.ray_color(ray, world, bounces_left - 1);
+                    ray * color
+                }
+                ScatterResult::Consume => Color::new(0., 0., 0.),
+            },
             HitResult::Miss => {
                 let unit_direction = ray.direction.normalized();
                 let a = 0.5 * (unit_direction.y + 1.0);

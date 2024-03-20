@@ -1,14 +1,20 @@
 use super::hittable::{HitRecord, HitResult, Hittable};
-use crate::my_math::prelude::*;
+use crate::{material::material::Material, my_math::prelude::*};
+use std::sync::Arc;
 
 pub struct Sphere {
     center: Point3,
     radius: f64,
+    material: Arc<dyn Material>,
 }
 
 impl Sphere {
-    pub fn new(center: Point3, radius: f64) -> Self {
-        Sphere { center, radius }
+    pub fn new(center: Point3, radius: f64, material: Arc<dyn Material>) -> Self {
+        Sphere {
+            center,
+            radius,
+            material: Arc::clone(&material),
+        }
     }
 }
 
@@ -48,6 +54,7 @@ impl Hittable for Sphere {
         rec.intersection_point = ray.at(rec.t);
         let outward_normal = (rec.intersection_point - self.center) / self.radius;
         rec.set_face_normal(ray, &outward_normal);
+        rec.material = Arc::clone(&self.material);
 
         HitResult::Hit(rec)
     }

@@ -7,9 +7,6 @@ pub struct HittableList {
     objects: Vec<Rc<dyn Hittable>>,
 }
 
-unsafe impl Sync for HittableList {}
-unsafe impl Send for HittableList {}
-
 impl HittableList {
     pub fn new_empty() -> Self {
         HittableList {
@@ -28,6 +25,9 @@ impl HittableList {
         self.objects.clear();
     }
 }
+
+unsafe impl Send for HittableList {}
+unsafe impl Sync for HittableList {}
 
 impl Hittable for HittableList {
     fn hit(&self, ray: &Ray, ray_t: &Interval) -> HitResult {

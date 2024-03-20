@@ -1,9 +1,15 @@
-use crate::my_math::prelude::*;
+use crate::{
+    color::Color,
+    material::material::{Lambertian, Material},
+    my_math::prelude::*,
+};
+use std::sync::Arc;
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct HitRecord {
     pub intersection_point: Point3,
     pub normal: Vec3,
+    pub material: Arc<dyn Material>,
     pub t: f64,
     pub front_face: bool,
 }
@@ -30,6 +36,7 @@ impl HitRecord {
         HitRecord {
             intersection_point: Point3::new(0., 0., 0.),
             normal: Vec3::new(0., 0., 0.),
+            material: Arc::new(Lambertian::new(Color::new(1., 1., 1.))),
             t: 0.,
             front_face: false,
         }
