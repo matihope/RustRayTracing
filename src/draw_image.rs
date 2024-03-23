@@ -8,10 +8,10 @@ use crate::{
 use std::rc::Rc;
 use std::sync::Arc;
 
-pub fn draw_image() {
+fn make_world() -> HittableList {
     let mut world = HittableList::new_empty();
 
-    let material_ground = Arc::new(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
+    let material_ground = Arc::new(Lambertian::new(Color::new(0.2, 0.8, 0.0)));
     let material_center = Arc::new(Metal::new(Color::new(0.7, 0.3, 0.3), 0.));
     let material_left = Arc::new(Metal::new(Color::new(0.8, 0.8, 0.8), 0.1));
     let material_right = Arc::new(Metal::new(Color::new(0.8, 0.6, 0.2), 0.1));
@@ -35,22 +35,38 @@ pub fn draw_image() {
         0.5,
         material_left,
     )));
-    // Right
     world.add(Rc::new(Sphere::new(
         Point3::new(1., 0., -1.),
         0.5,
         material_glass.clone(),
     )));
-    // Inside right
     world.add(Rc::new(Sphere::new(
         Point3::new(1., 0., -1.),
         -0.3,
         material_glass,
     )));
 
+    world
+}
+
+pub fn draw_image() {
     let mut cam = Camera::default();
     cam.aspect_ratio = 16.0 / 9.0;
     cam.image_width = 400;
     cam.samples_per_pixel = 100;
-    cam.render(&world);
+    cam.up_direction = Vec3::new(0., 1., 0.);
+    cam.vfov = 25.;
+    cam.look_from = Point3::new(-2., 0.7, 2.7);
+    cam.look_at = Point3::new(0., 0., -1.);
+    cam.defocus_angle = 1.0;
+    cam.focus_dist = (cam.look_from - cam.look_at).length() - 0.25;
+
+    // cam.vfov = 20.;
+    // cam.look_from = Point3::new(-2., 2., 1.);
+    // cam.look_at = Point3::new(0., 0., -1.);
+
+    // cam.defocus_angle = 10.0;
+    // cam.focus_dist = 3.4;
+
+    cam.render(&make_world());
 }

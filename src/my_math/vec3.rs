@@ -65,6 +65,18 @@ impl Vec3 {
             v
         }
     }
+    pub fn random_in_unit_disk() -> Self {
+        loop {
+            let p = Vec3::new(
+                random_double_range(-1., 1.),
+                random_double_range(-1., 1.),
+                0.,
+            );
+            if p.length_squared() <= 1. {
+                return p;
+            }
+        }
+    }
     pub fn near_zero(&self) -> bool {
         return self.x.abs() < Self::EPSILON
             && self.y.abs() < Self::EPSILON
@@ -76,7 +88,8 @@ impl Vec3 {
     pub fn refract(&self, normal: &Vec3, refraction_fraction: f64) -> Vec3 {
         let cosine = -self.dot(normal).min(1.0);
         let r_prime_perpendicular = (*self + *normal * cosine) * refraction_fraction;
-        let r_prime_parallel = -*normal * (1. - r_prime_perpendicular.length_squared()).abs().sqrt();
+        let r_prime_parallel =
+            -*normal * (1. - r_prime_perpendicular.length_squared()).abs().sqrt();
         r_prime_parallel + r_prime_perpendicular
     }
 }
