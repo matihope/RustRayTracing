@@ -8,9 +8,9 @@ use crate::{
     material::material::{Dielectric, Lambertian, Material, Metal},
     my_math::prelude::*,
 };
+use rand::rngs::ThreadRng;
 use std::rc::Rc;
 use std::sync::Arc;
-use rand::rngs::ThreadRng;
 
 fn make_world() -> HittableList {
     let mut world = HittableList::new_empty();
@@ -56,9 +56,9 @@ fn make_world() -> HittableList {
 pub fn make_big_camera() -> Camera {
     let mut cam = Camera::default();
     cam.aspect_ratio = 16.0 / 9.0;
-    cam.image_width = 400;
+    cam.image_width = 1000;
 
-    cam.samples_per_pixel = 500;
+    cam.samples_per_pixel = 1000;
     cam.vfov = 20.0;
 
     cam.look_from = Point3::new(10., 2., -10.);
@@ -75,9 +75,16 @@ fn gen_material(rng: &mut ThreadRng) -> Arc<dyn Material> {
     let zerone = Uniform::new(0., 1.);
     let mat_type = rng.sample(zerone);
     if mat_type < 0.15 {
-        Arc::new(Metal::new(Color::new(random_double(), random_double(), random_double()), random_double()))
+        Arc::new(Metal::new(
+            Color::new(random_double(), random_double(), random_double()),
+            random_double(),
+        ))
     } else if mat_type <= 0.8 {
-        Arc::new(Lambertian::new(Color::new(random_double(), random_double(), random_double())))
+        Arc::new(Lambertian::new(Color::new(
+            random_double(),
+            random_double(),
+            random_double(),
+        )))
     } else {
         Arc::new(Dielectric::new(Color::new(1., 1., 1.), 1.5))
     }
@@ -86,7 +93,7 @@ fn gen_material(rng: &mut ThreadRng) -> Arc<dyn Material> {
 pub fn make_big_render() -> HittableList {
     let mut world = HittableList::new_empty();
 
-    let material_ground = Arc::new(Lambertian::new(Color::new(0.3, 0.3, 0.3)));
+    let material_ground = Arc::new(Metal::new(Color::new(0.7, 0.7, 0.7), 0.1));
     world.add(Rc::new(Sphere::new(
         Point3::new(0., -1000., 0.),
         1000.,
@@ -94,26 +101,28 @@ pub fn make_big_render() -> HittableList {
     )));
 
     let mut rng = rand::thread_rng();
-    let mut dist = Uniform::new(-2., 2.);
 
     for x in -11..=11 {
         for z in -11..=11 {
-            let center = Vec3::new(x as f64 + 0.9 * random_double(), 0.2, z as f64 + 0.9 * random_double());
+            let center = Vec3::new(
+                x as f64 + 0.9 * random_double(),
+                0.2,
+                z as f64 + 0.9 * random_double(),
+            );
             let sphere = Rc::new(Sphere::new(center, 0.2, gen_material(&mut rng)));
             world.add(sphere);
         }
     }
 
-
     let material_center = Arc::new(Dielectric::new(Color::new(1.0, 1.0, 1.0), 1.5));
-    let material_left = Arc::new(Metal::new(Color::new(0.8, 0.8, 0.8), 0.1));
+    let material_left = Arc::new(Lambertian::new(Color::new(0.9, 0.4, 0.4)));
     let material_right = Arc::new(Metal::new(Color::new(0.6, 0.6, 0.6), 0.));
 
     // Center
     world.add(Rc::new(Sphere::new(
         Point3::new(0., 1., -1.),
         1.,
-        material_center,
+        material_center.clone(),
     )));
     // Left
     world.add(Rc::new(Sphere::new(
@@ -121,16 +130,21 @@ pub fn make_big_render() -> HittableList {
         1.,
         material_left,
     )));
+    world.add(Rc::new(Sphere::new(
+        Point3::new(-4., 1., -1.),
+        1.,
+        material_center.clone(),
+    )));
+    world.add(Rc::new(Sphere::new(
+        Point3::new(-4., 1., -1.),
+        -0.75,
+        material_center.clone(),
+    )));
     // Right
     world.add(Rc::new(Sphere::new(
         Point3::new(2., 1., -1.),
         1.,
         material_right.clone(),
-    )));
-    world.add(Rc::new(Sphere::new(
-        Point3::new(2., 1., -1.),
-        -0.8,
-        material_right,
     )));
 
     world
